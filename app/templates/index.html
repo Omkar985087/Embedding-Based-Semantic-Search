@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Semantic Vector Search Dashboard (RAG)</title>
+    <!-- Google Fonts: Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Chart.js for beautiful evaluation graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <!-- Background Glow Elements -->
+    <div class="glow-bg glow-bg-1"></div>
+    <div class="glow-bg glow-bg-2"></div>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo-area">
+                <span class="logo-icon">✦</span>
+                <div class="logo-text">
+                    <h1>Semantic Retrieval Engine</h1>
+                    <p class="subtitle">Replacing keyword search with dense vector similarity & RAG</p>
+                </div>
+            </div>
+            <div class="status-panel">
+                <div class="status-badge" id="engine-mode-badge">
+                    <span class="pulse-dot"></span>
+                    <span id="engine-mode-text">Initializing Engine...</span>
+                </div>
+                <div class="status-badge" id="faiss-badge">
+                    <span class="status-label">FAISS:</span>
+                    <span id="faiss-text" class="status-val text-dim">Disabled</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <nav class="app-nav">
+            <button class="nav-btn active" data-tab="search-playground">
+                <span class="btn-icon">🔍</span> Search Comparison
+            </button>
+            <button class="nav-btn" data-tab="rag-pipeline">
+                <span class="btn-icon">⚡</span> RAG Pipeline
+            </button>
+            <button class="nav-btn" data-tab="vector-visualizer">
+                <span class="btn-icon">🌌</span> Vector Space Map
+            </button>
+            <button class="nav-btn" data-tab="eval-simulator">
+                <span class="btn-icon">📊</span> Relevance Simulator
+            </button>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="app-main">
+
+            <!-- TAB 1: SEARCH PLAYGROUND -->
+            <section id="search-playground" class="tab-content active">
+                <div class="search-hero">
+                    <div class="search-bar-container">
+                        <div class="search-input-wrapper">
+                            <span class="search-lens">🔍</span>
+                            <input type="text" id="query-input" placeholder="Search corporate wiki, team slack, or employee directory (e.g. 'work from home guidelines' or 'vacation policy')..." value="how many days can i take off?">
+                            <button id="search-btn" class="glow-button">Retrieve</button>
+                        </div>
+                        <div class="search-filters">
+                            <span class="filter-label">Source Filter:</span>
+                            <div class="filter-options">
+                                <button class="filter-btn active" data-source="">All</button>
+                                <button class="filter-btn" data-source="Notion"><span class="src-dot src-notion"></span> Notion</button>
+                                <button class="filter-btn" data-source="Slack"><span class="src-dot src-slack"></span> Slack</button>
+                                <button class="filter-btn" data-source="LinkedIn"><span class="src-dot src-linkedin"></span> LinkedIn</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="side-by-side-results">
+                    <!-- TF-IDF Column -->
+                    <div class="results-column glass-panel" id="tfidf-panel">
+                        <div class="column-header">
+                            <div class="header-title">
+                                <h3>TF-IDF Keyword Search</h3>
+                                <p class="desc">Exact word overlap scoring (cosine similarity)</p>
+                            </div>
+                            <span class="engine-tag tag-tfidf">Lexical</span>
+                        </div>
+                        <div class="results-list" id="tfidf-results-list">
+                            <div class="empty-state">Enter a query to compare keyword search...</div>
+                        </div>
+                    </div>
+
+                    <!-- Vector Similarity Column -->
+                    <div class="results-column glass-panel highlight-border" id="vector-panel">
+                        <div class="column-header">
+                            <div class="header-title">
+                                <h3>Embedding Semantic Search</h3>
+                                <p class="desc">Dense vector representation and similarity matching</p>
+                            </div>
+                            <span class="engine-tag tag-vector">Dense Vectors</span>
+                        </div>
+                        <div class="results-list" id="vector-results-list">
+                            <div class="empty-state">Enter a query to compare semantic search...</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+
+            <!-- TAB 2: RAG PIPELINE -->
+            <section id="rag-pipeline" class="tab-content">
+                <div class="rag-layout">
+                    <!-- Left: Control Panel -->
+                    <div class="rag-controls glass-panel">
+                        <h3>Ask RAG Assistant</h3>
+                        <p class="desc">Retrieves context first, builds a prompt, and generates answers.</p>
+                        
+                        <div class="rag-input-area">
+                            <input type="text" id="rag-query-input" placeholder="Ask a question (e.g. 'what are the meal expense guidelines?')..." value="what are the meal expense guidelines?">
+                            <button id="rag-submit-btn" class="glow-button">Generate Answer</button>
+                        </div>
+
+                        <div class="rag-explainer">
+                            <h4>RAG Pipeline Mechanics</h4>
+                            <div class="step-card">
+                                <div class="step-num">1</div>
+                                <div class="step-info">
+                                    <h5>Semantic Retrieval</h5>
+                                    <p>Find top-3 semantically similar document chunks in vector space.</p>
+                                </div>
+                            </div>
+                            <div class="step-card">
+                                <div class="step-num">2</div>
+                                <div class="step-info">
+                                    <h5>Context Injection</h5>
+                                    <p>Stuff retrieved chunks into the prompt context block.</p>
+                                </div>
+                            </div>
+                            <div class="step-card">
+                                <div class="step-num">3</div>
+                                <div class="step-info">
+                                    <h5>LLM Synthesis</h5>
+                                    <p>Synthesize a highly accurate, grounded answer based strictly on the context.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Visualizer Output -->
+                    <div class="rag-output-panel glass-panel">
+                        <div class="pipeline-stepper">
+                            <button class="step-tab active" data-step="output-step-retrieved">1. Retrieved Context</button>
+                            <button class="step-tab" data-step="output-step-prompt">2. Prompt Sent to LLM</button>
+                            <button class="step-tab" data-step="output-step-response">3. Synthesized Response</button>
+                        </div>
+
+                        <div class="step-display-area">
+                            <!-- Output step 1: Retrieved Chunks -->
+                            <div id="output-step-retrieved" class="step-slide active">
+                                <h4 class="section-label">Top Semantically Retrieved Documents</h4>
+                                <div id="rag-retrieved-chunks" class="retrieved-chunks-list">
+                                    <div class="empty-state">Submit a RAG query to retrieve contexts...</div>
+                                </div>
+                            </div>
+
+                            <!-- Output step 2: Prompts -->
+                            <div id="output-step-prompt" class="step-slide">
+                                <h4 class="section-label">Constructed Prompt Context</h4>
+                                <div class="prompt-box">
+                                    <pre><code id="rag-prompt-code" class="code-font">Submit a RAG query to inspect the prompt template...</code></pre>
+                                </div>
+                            </div>
+
+                            <!-- Output step 3: Synthesis response -->
+                            <div id="output-step-response" class="step-slide">
+                                <h4 class="section-label">Synthesized Response</h4>
+                                <div class="response-container">
+                                    <div class="ai-avatar">✦</div>
+                                    <div class="ai-response-box">
+                                        <p id="rag-response-text" class="response-text empty">Submit a query to generate AI response...</p>
+                                        <div class="typing-indicator" id="rag-typing">
+                                            <span></span><span></span><span></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+
+            <!-- TAB 3: VECTOR VISUALIZER -->
+            <section id="vector-visualizer" class="tab-content">
+                <div class="visualizer-layout">
+                    <!-- Left: Canvas Area -->
+                    <div class="canvas-panel glass-panel">
+                        <div class="canvas-header">
+                            <div class="canvas-title">
+                                <h3>2D Projection Map</h3>
+                                <p class="desc">High-dimensional embeddings projected onto 2D space using Principal Component Analysis (PCA)</p>
+                            </div>
+                            <button id="reset-canvas-btn" class="flat-btn">Reset View</button>
+                        </div>
+                        <div class="canvas-wrapper">
+                            <canvas id="vector-canvas" width="600" height="450"></canvas>
+                            <div class="canvas-legend">
+                                <span class="legend-item"><span class="legend-dot Notion"></span> Notion Wiki</span>
+                                <span class="legend-item"><span class="legend-dot Slack"></span> Slack Chats</span>
+                                <span class="legend-item"><span class="legend-dot LinkedIn"></span> LinkedIn Jobs/Profiles</span>
+                                <span class="legend-item"><span class="legend-dot query-node"></span> Query Vector</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Info Panel -->
+                    <div class="visualizer-info-panel glass-panel">
+                        <h3>Interactive Explorer</h3>
+                        <p class="desc">Hover over document nodes in the star map to read their contents. Queries will project a glowing node and show nearest neighbor associations.</p>
+                        
+                        <div class="visualizer-search-box">
+                            <input type="text" id="vis-query-input" placeholder="Type query to project vector (e.g. 'PTO')..." value="how to page on-call">
+                            <button id="vis-query-btn" class="glow-button">Project Query</button>
+                        </div>
+
+                        <div id="vis-node-details" class="node-details-card">
+                            <div class="empty-state">Hover over a point or project a query in the coordinate map to inspect details...</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+
+            <!-- TAB 4: RELEVANCE SIMULATOR -->
+            <section id="eval-simulator" class="tab-content">
+                <div class="eval-hero glass-panel">
+                    <div class="eval-hero-info">
+                        <h2>User Simulation & Benchmark Console</h2>
+                        <p>Evaluate semantic vector retrieval vs keyword lookup under user vocabulary shifts. We run 8 distinct search scenarios featuring strong synonym replacements, measuring <strong>Mean Reciprocal Rank (MRR)</strong>, <strong>Precision@1</strong>, and <strong>Precision@3</strong>.</p>
+                    </div>
+                    <button id="run-benchmark-btn" class="glow-button primary-glow">Run Live Benchmark</button>
+                </div>
+
+                <!-- Metrics Dashboard (Shown post-run) -->
+                <div class="metrics-grid" id="benchmark-metrics-grid" style="display: none;">
+                    <div class="metric-card glass-panel highlight-success">
+                        <span class="metric-label">Search Relevance Increase</span>
+                        <h2 class="metric-val text-success" id="gain-val">+29.0%</h2>
+                        <p class="metric-desc">Improvement in search relevance score over TF-IDF in simulated queries</p>
+                    </div>
+                    <div class="metric-card glass-panel">
+                        <span class="metric-label">Vector Search MRR</span>
+                        <h2 class="metric-val text-vector" id="vector-mrr-val">0.800</h2>
+                        <p class="metric-desc">Mean Reciprocal Rank (Average position of target document)</p>
+                    </div>
+                    <div class="metric-card glass-panel">
+                        <span class="metric-label">TF-IDF MRR</span>
+                        <h2 class="metric-val text-tfidf" id="tfidf-mrr-val">0.620</h2>
+                        <p class="metric-desc">Mean Reciprocal Rank (Average position of target document)</p>
+                    </div>
+                </div>
+
+                <div class="eval-charts-and-table" id="benchmark-results-container" style="display: none;">
+                    <!-- Left: Visual Chart -->
+                    <div class="chart-container glass-panel">
+                        <h3>Retrieval Metrics Comparison</h3>
+                        <div class="canvas-chart-wrapper">
+                            <canvas id="metrics-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Right: Table -->
+                    <div class="eval-details glass-panel">
+                        <h3>Scenario Analysis</h3>
+                        <p class="desc">See why vector search excels over keyword models on vocabulary-shifting intent.</p>
+                        <div class="scenario-list" id="scenarios-container">
+                            <!-- Populated in JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pre-run Empty State -->
+                <div class="eval-pre-run glass-panel" id="benchmark-pre-run">
+                    <div class="empty-illustration">📊</div>
+                    <h3>Ready for Benchmarking</h3>
+                    <p>Trigger the live user simulation suite to run evaluation queries and calculate ranking differences.</p>
+                    <button id="run-benchmark-btn-sub" class="flat-btn border-glow">Trigger Simulation</button>
+                </div>
+            </section>
+
+        </main>
+        
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>Built with 🤍 by Omkar Kadam | Sentence-Transformers & FAISS Vector Pipeline Demonstration</p>
+        </footer>
+    </div>
+
+    <!-- Custom Script -->
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
