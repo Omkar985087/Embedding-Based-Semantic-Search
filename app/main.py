@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Query, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -6,8 +7,6 @@ import os
 import sys
 import math
 import numpy as np
-
-app = FastAPI(title="Embedding-Based Semantic Search (RAG)")
 
 # Define the corpus of Notion, Slack, and LinkedIn documents
 DOCUMENTS = [
@@ -323,8 +322,8 @@ class VectorSearchEngine:
             })
         return results[:top_k]
 
-@app.on_event("startup")
-def startup_event():
+@asynccontextmanager
+async def lifespan(app):
     global tfidf_engine, vector_engine, pca_projector, coords_2d
     print("Initialising indexes on startup...")
     tfidf_engine = TFIDFSearchEngine(DOCUMENTS)
@@ -340,6 +339,10 @@ def startup_event():
     if max_val > 0:
         coords_2d = (coords_2d / max_val) * 75
     print("Startup index building complete.")
+    yield
+
+app = FastAPI(title="Embedding-Based Semantic Search (RAG)", lifespan=lifespan)
+
 
 @app.get("/")
 def read_root():
